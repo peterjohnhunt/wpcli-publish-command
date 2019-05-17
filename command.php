@@ -25,32 +25,25 @@ class Publish_Command {
             WP_CLI::error('incorrect version command');
         }
 
-        $this->set_version($version);
+        $updated = $this->set_version($version);
 
-        WP_CLI::success( 'version published' );
+        if ( !$updated ) WP_CLI::error('unable to update version');
+
+        WP_CLI::success( "Version updated to {$version}" );
+
+        return $version;
     }
 
     protected function _get_active_theme(){
-        $raw_themes = WP_CLI::launch_self( 'theme list', array(), array( 'format' => 'json' ), false, true );
-        $themes     = json_decode( $raw_themes->stdout );
-        $active     = array_filter($themes, function($t){ return $t->status == 'active'; });
-
-        if ( empty($active) ) WP_CLI::error('no active theme');
-
-        $active = array_shift($active);
-
-        $raw_theme = WP_CLI::launch_self( 'theme get '.$active->name, array(), array( 'format' => 'json' ), false, true );
-        $theme = json_decode( $raw_theme->stdout );
-
-        return $theme;
+        return wp_get_theme();
     }
 
     protected function _get_current_version(){
-        return !empty($this->theme) ? $this->theme->version : false;
+        return $this->theme ? $this->theme->version : false;
     }
 
     protected function _get_stylesheet_dir(){
-        return !empty($this->theme) ? $this->theme->stylesheet_dir : false;
+        return $this->theme ? $this->theme->get_stylesheet_directory() : false;
     }
 
     protected function _uptick_version($type){
@@ -81,9 +74,12 @@ class Publish_Command {
         return implode('.', array($major, $minor, $patch));
     }
 
-    protected function _update_file($filename, $pattern, $replace, $count=1){
-        $base     = $this->_get_stylesheet_dir();
-        $path     = trailingslashit($base) . $filename;
+    protected function _update_style($filename, $pattern, $replace, $count=1){
+        $base = $this->_get_stylesheet_dir();
+        $path = trailingslashit($base) . $filename;
+
+        if ( !file_exists($path) ) return WP_CLI::line( "{$filename} doesn't exist or is empty" );
+
         $contents = file_get_contents($path);
 
         if (!$contents) return WP_CLI::line( "{$filename} doesn't exist or is empty" );
@@ -91,8 +87,10 @@ class Publish_Command {
         $updated  = preg_replace($pattern, $replace, $contents, $count);
 
         if (!$updated || $contents == $updated) return WP_CLI::line( "{$filename} failed or wasn't changed" );
+
+        $saved = file_put_contents($path, $updated);
         
-        return file_put_contents($path, $updated);
+        return ($saved !== false);
     }
 
     protected function set_version($new){
@@ -100,13 +98,9 @@ class Publish_Command {
 
         if ( version_compare($old,$new) !== -1 ) WP_CLI::error("New version number: {$new} is below current version: {$old}");
 
-        $pattern = '/([Vv]ersion:\s?)'.self::VPATTERN.'/';
-        $style   = $this->_update_file('style.css', $pattern, '${1}'.$new);
-        if ( $style ) WP_CLI::line( "updated style.css version to {$new}" );
+        $pattern = '/^(\s*Version:\s?)'.self::VPATTERN.'$/m';
 
-        $pattern   = '/([\'\"]THEME_VERSION[\'\"],\s?[\'\"])'.self::VPATTERN.'([\'\"])/';
-        $functions = $this->_update_file('functions.php', $pattern, '${1}'.$new.'${2}');
-        if ( $functions ) WP_CLI::line( "updated functions.php version to {$new}" );
+        return $this->_update_style('style.css', $pattern, '${1}'.$new);
     }
 }
 
