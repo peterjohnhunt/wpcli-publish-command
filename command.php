@@ -123,9 +123,9 @@ class Publish_Command {
         $date    = current_time('Y-m-d');
         $folder  = is_multisite() ? $this->theme_dir : ABSPATH;
         $path    = trailingslashit( $folder ) . 'changelog.md';
-        $find    = '/^(## \[v'.$this->current_version.'\])/m';
+        $find    = '/^(## \[?v'.$this->current_version.'\]?)(\([^\)]\))?/m';
         $link    = $this->repository ? "[v{$new_version}]($this->repository/compare/v{$this->current_version}...v{$new_version})" : "v{$new_version}";
-        $replace = "## {$link} {$date}\n{$this->message}\n\n\\1";
+        $replace = "## {$link} {$date}\n{$this->message}\n\n\\1\\2";
         return $this->_update_file($path, $find, $replace);
     }
 }
