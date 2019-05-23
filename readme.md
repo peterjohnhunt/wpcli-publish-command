@@ -8,7 +8,8 @@ Publish release notes, change log version, and theme version in one easy command
 run `wp publish help` after installing
 
 ## WP-CLI Docs
-```Publish version of site and theme
+```
+Publish version of site and theme
 
 ## OPTIONS
 <version>...
@@ -29,4 +30,5 @@ options:
 ## EXAMPLES
    wp publish major|minor|patch|1.0.0
    wp publish style major|minor|patch|1.0.0
-   wp publish changelog major|minor|patch|1.0.0```
+   wp publish changelog major|minor|patch|1.0.0
+```
