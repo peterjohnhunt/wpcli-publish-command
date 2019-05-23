@@ -16,13 +16,17 @@ class Publish_Command {
 
     protected $repository;
 
+    protected $message;
+
     function __invoke( $args, $assoc_args ) {
-        $command = 'all';
+        $command = 'everything';
         $theme   = wp_get_theme();
 
         $this->theme       = $theme;
         $this->version     = $theme->version;
         $this->theme_dir   = $theme->get_stylesheet_directory();
+        $this->dryrun      = WP_CLI\Utils\get_flag_value($assoc_args, 'dryrun');
+        $this->message     = WP_CLI\Utils\get_flag_value($assoc_args, 'message');
         $this->repository  = WP_CLI\Utils\get_flag_value($assoc_args, 'repository');
 
         if ( count($args) > 1 ) {
@@ -45,7 +49,7 @@ class Publish_Command {
 
         if ( !$updated ) WP_CLI::error('unable to publish version');
 
-        WP_CLI::success( "{$command} version updated from {$this->version} to {$version}" );
+        WP_CLI::success( "{$command} updated from {$this->version} to {$version}" );
     }
 
     protected function _sem_version($version){
@@ -85,14 +89,22 @@ class Publish_Command {
 
         if (!$updated || $contents == $updated) return WP_CLI::line( "{$path} failed or wasn't changed" );
 
-        $saved = file_put_contents($path, $updated);
+        $saved = !$this->dryrun ? file_put_contents($path, $updated) : true;
         
         return ($saved !== false);
     }
 
-    function all($version){
-        $changelog = $this->changelog($version);
-        $style     = $this->style($version);
+    function everything($version){
+        if ( !$this->dryrun ){
+            $this->dryrun = true;
+            $verified = $this->everything($version);
+            if ( !$verified ) WP_CLI::error('Unable to complete the release');
+            $this->dryrun = false;
+        }
+
+        $style        = $this->style($version);
+        $changelog    = $this->changelog($version);
+
         return ($style && $changelog);
     }
 
@@ -104,18 +116,20 @@ class Publish_Command {
     }
 
     function changelog($version){
-        $details = WP_CLI\Utils\launch_editor_for_input("\n\n# Please enter the release notes.\n# Lines starting with '#' will be ignored and an empty message aborts the release.\n# current version: v{$this->version}\n# releasing version: v{$version}");
-        $details = preg_replace('/^#[^#].*$\s+/m', '', $details);
-        $details = trim($details);
+        if ( !$this->message ) {
+            $message = WP_CLI\Utils\launch_editor_for_input("\n\n# Please enter the release notes.\n# Lines starting with '#' will be ignored and an empty message aborts the release.\n# current version: v{$this->version}\n# releasing version: v{$version}");
+            $message = preg_replace('/^#[^#].*$\s+/m', '', $message);
+            $this->message = trim($message);
+        }
 
-        if ( !$details || true ) WP_CLI::error('Aborting release due to empty release notes');
+        if ( !$this->message ) WP_CLI::error('Aborting release due to empty release notes');
 
         $date    = current_time('Y-m-d');
         $folder  = is_multisite() ? $this->theme_dir : ABSPATH;
         $path    = trailingslashit( $folder ) . 'changelog.md';
         $find    = '/^(## \[v'.$this->version.'\])/m';
         $link    = $this->repository ? "[v{$version}]($this->repository/compare/v{$this->version}...v{$version})" : "v{$version}";
-        $replace = "## {$link} {$date}\n{$details}\n\\1";
+        $replace = "## {$link} {$date}\n{$this->message}\n\n\\1";
         return $this->_update_file($path, $find, $replace);
     }
 }
