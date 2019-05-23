@@ -23,8 +23,8 @@ options:
 ---
 [--message=<message>]
 : release notes if full editor is not needed
-[--repo=<repo>]
-: Git repo url for changelog compare link
+[--repository=<repository>]
+: Git repository url for changelog compare link
 
 ## EXAMPLES
    wp publish major|minor|patch|1.0.0
