@@ -1,13 +1,13 @@
 ## WP-CLI Publish Command
 Publish release notes, change log version, and theme version in one easy command
 
-### Install:
+## Install:
 `wp package install git@github.com:peterjohnhunt/wpcli-publish-command.git`
 
-### Getting Started
+## Getting Started
 run `wp publish help` after installing
 
-
+## WP-CLI Docs
 ```Publish version of site and theme
 
 ## OPTIONS
