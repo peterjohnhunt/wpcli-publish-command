@@ -19,7 +19,7 @@ class Publish_Command {
     protected $message;
 
     function __invoke( $args, $assoc_args ) {
-        $command = 'everything';
+        $command = 'site';
         $theme   = wp_get_theme();
 
         $this->theme       = $theme;
@@ -94,10 +94,10 @@ class Publish_Command {
         return ($saved !== false);
     }
 
-    function everything($version){
+    function site($version){
         if ( !$this->dryrun ){
             $this->dryrun = true;
-            $verified = $this->everything($version);
+            $verified = $this->site($version);
             if ( !$verified ) WP_CLI::error('Unable to complete the release');
             $this->dryrun = false;
         }
