@@ -104,11 +104,16 @@ class Publish_Command {
     }
 
     function changelog($version){
+        $details = WP_CLI\Utils\launch_editor_for_input("\n\n# Please enter the release notes.\n# Lines starting with '#' will be ignored and an empty message aborts the release.\n# current version: v{$this->version}\n# releasing version: v{$version}");
+        $details = preg_replace('/^#[^#].*$\s+/m', '', $details);
+        $details = trim($details);
+
+        if ( !$details || true ) WP_CLI::error('Aborting release due to empty release notes');
+
         $date    = current_time('Y-m-d');
         $folder  = is_multisite() ? $this->theme_dir : ABSPATH;
         $path    = trailingslashit( $folder ) . 'changelog.md';
         $find    = '/^(## \[v'.$this->version.'\])/m';
-        $details = WP_CLI\Utils\launch_editor_for_input('');
         $link    = $this->repository ? "[v{$version}]($this->repository/compare/v{$this->version}...v{$version})" : "v{$version}";
         $replace = "## {$link} {$date}\n{$details}\n\\1";
         return $this->_update_file($path, $find, $replace);
