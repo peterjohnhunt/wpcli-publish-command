@@ -1,6 +1,7 @@
 {
     "name": "peterjohnhunt/publish-command",
     "description": "Update Theme Style and Functions Version Number",
+    "version": "1.0.0",
     "type": "wp-cli-package",
     "homepage": "https://github.com/peterjohnhunt/wpcli-publish-command",
     "license": "MIT",
