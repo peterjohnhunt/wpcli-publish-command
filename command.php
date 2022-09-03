@@ -14,18 +14,14 @@ class Publish_Command {
      * ## OPTIONS
      * <version>...
      * : Version or subcommand followed by version number
-     * [--dryrun=<dryrun>]
-     * : whether to actually update files, or run a dry run with not actual file changes.
-     * ---
-     * default: false
-     * options:
-     *    - true
-     *    - false
      * ---
      * [--message=<message>]
      * : release notes if full editor is not needed
-     * [--repository=<repository>]
-     * : Git repository url for changelog compare link
+     * ---
+     * [--command=<command>]
+     * : set command
+     * [--folder=<folder>]
+     * : set folder for plugin or theme
      * 
      * ## EXAMPLES
      *    wp publish major|minor|patch|1.0.0
@@ -34,12 +30,12 @@ class Publish_Command {
      *    wp publish plugin <plugin> major|minor|patch|1.0.0
      */
     function __invoke( $args, $assoc_args ) {
-        $this->command = count($args) == 1 ? '' : $args[0];
-        $this->folder  = count($args) != 3 ? '' : $args[1];
+        $this->command = count($args) > 1 ? $args[0] : $assoc_args['command'] ?? false;
+        $this->folder  = count($args) == 3 ? $args[1] : $assoc_args['folder'] ?? false;
         $this->version = end($args);
 
-        $this->message    = $assoc_args['message'] ?? '';
-        $this->repository = $assoc_args['repository'] ?? '';
+        $this->message = $assoc_args['message'] ?? '';
+
 
         if ( !$this->command ) $this->command = $this->get_command();
 
@@ -216,7 +212,6 @@ class Publish_Command {
         $date    = current_time('Y-m-d');
         $path    = trailingslashit( $folder ) . 'changelog.md';
         $find    = '/^(## \[?v'.$current.'\]?((\()(.+\/)([^)]+)(\)))?)/m';
-        $link    = $this->repository ? "" : "v{$new}";
         $replace = "## [v{$new}]\\3\\4v{$current}...v{$new}\\6 {$date}\n{$this->message}\n\n\\1";
         return $this->update_file($path, $find, $replace);
     }
