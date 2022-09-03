@@ -55,15 +55,16 @@ class Publish_Command {
         if ( $plugin ) return 'plugin';
 
         $theme = $this->get_theme($this->folder);
-        if ( $theme ) return 'theme';
+        if ( $theme && $theme->get_stylesheet_directory() !== get_stylesheet_directory() ) return 'theme';
 
         return 'site';
     }
 
-    function get_message($message, $current, $new) {
+    function get_message($folder, $current, $new) {
         if ($this->message) return $this->message;
 
-        $message = WP_CLI\Utils\launch_editor_for_input("\n\n# Please enter the release notes.\n# Lines starting with '#' will be ignored and an empty message aborts the release.\n# Updating {$this->command}: {$message}\n# Current version: v{$current}\n# Releasing version: v{$new}");
+        $title   = basename(realpath($folder));
+        $message = WP_CLI\Utils\launch_editor_for_input("\n\n# Please enter the release notes.\n# Lines starting with '#' will be ignored and an empty message aborts the release.\n# Updating {$this->command}: {$title}\n# Current version: v{$current}\n# Releasing version: v{$new}");
         $message = preg_replace('/^#[^#].*$\s+/m', '', $message);
         $message = trim($message);
 
@@ -90,18 +91,6 @@ class Publish_Command {
         $fetcher = new WP_CLI\Fetchers\Theme();
 
         return $fetcher->get( $folder );
-    }
-
-    function get_theme_version($folder=false) {
-        $theme = $this->get_theme($folder);
-
-        return $theme ? $theme->get('Version') : false;
-    }
-
-    function get_theme_folder($folder=false) {
-        $theme = $this->get_theme($folder);
-
-        return $theme ? $theme->get_stylesheet_directory() : false;
     }
 
     function parse_plugin_folder() {
@@ -163,24 +152,6 @@ class Publish_Command {
         }
     }
 
-    function get_plugin_version($folder=false) {
-        $plugin = $this->get_plugin($folder);
-
-        return $plugin['Version'] ?? false;
-    }
-
-    function get_plugin_folder($folder=false) {
-        $plugin = $this->get_plugin($folder);
-
-        return $plugin['PluginFolder'] ?? false;
-    }
-
-    function get_plugin_file($folder=false) {
-        $plugin = $this->get_plugin($folder);
-
-        return $plugin['PluginFile'] ?? false;
-    }
-
     protected function update_file($path, $find, $replace, $count=1){
         if ( !file_exists($path) ) return WP_CLI::line( "{$path} doesn't exist" );
 
@@ -205,7 +176,7 @@ class Publish_Command {
     }
 
     function update_changelog($folder, $current, $new){
-        if ( !$this->message ) $this->get_message(basename($folder), $current, $new);
+        if ( !$this->message ) $this->get_message($folder, $current, $new);
 
         if ( !$this->message ) WP_CLI::error('Aborting release due to empty release notes');
 
@@ -230,9 +201,10 @@ class Publish_Command {
     }
 
     function publish_plugin() {
-        $file    = $this->get_plugin_file($this->folder);
-        $root    = $this->get_plugin_folder($this->folder);
-        $current = $this->get_plugin_version($this->folder);
+        $plugin  = $this->get_plugin($this->folder);
+        $file    = $plugin['PluginFile'];
+        $root    = $plugin['PluginFolder'];
+        $current = $plugin['Version'];
         $new     = WP_CLI\Utils\increment_version($current, $this->version);
         
         $this->version_check($current, $new);
@@ -245,8 +217,9 @@ class Publish_Command {
     }
 
     function publish_theme() {
-        $root    = $this->get_theme_folder($this->folder);
-        $current = $this->get_theme_version($this->folder);
+        $theme   = $this->get_theme($this->folder);
+        $root    = $theme->get_stylesheet_directory();
+        $current = $theme->get('Version');
         $new     = WP_CLI\Utils\increment_version($current, $this->version);
 
         $this->version_check($current, $new);
