@@ -29,9 +29,9 @@ class Publish_Command {
      * 
      * ## EXAMPLES
      *    wp publish major|minor|patch|1.0.0
-     *    wo publish site major|minor|patch|1.0.0
-     *    wo publish theme <theme> major|minor|patch|1.0.0
-     *    wo publish plugin <plugin> major|minor|patch|1.0.0
+     *    wp publish site major|minor|patch|1.0.0
+     *    wp publish theme <theme> major|minor|patch|1.0.0
+     *    wp publish plugin <plugin> major|minor|patch|1.0.0
      */
     function __invoke( $args, $assoc_args ) {
         $this->command = count($args) == 1 ? '' : $args[0];

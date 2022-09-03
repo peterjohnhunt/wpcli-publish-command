@@ -29,6 +29,7 @@ options:
 
 ## EXAMPLES
    wp publish major|minor|patch|1.0.0
-   wp publish style major|minor|patch|1.0.0
-   wp publish changelog major|minor|patch|1.0.0
+   wp publish site major|minor|patch|1.0.0
+   wp publish theme <theme> major|minor|patch|1.0.0
+   wp publish plugin <plugin> major|minor|patch|1.0.0
 ```
