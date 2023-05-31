@@ -29,3 +29,12 @@ Publish version of site and theme
    wp publish theme <theme> major|minor|patch|1.0.0
    wp publish plugin <plugin> major|minor|patch|1.0.0
 ```
+
+## SSL errors when installing
+
+If you’re getting a SSL error saying the certificate is expired, here’s how to fix (on macOS):
+ - Download the latest certificate [here](https://curl.se/docs/caextract.html)
+ - Move that certificate to `/Applications/MAMP/Library/OpenSSL/certs/cacert.pem`
+ - Open your current `php.ini` file (to check the right folder, use `which php`)
+ - Update the `openssl.cafile` line so it's like this: `openssl.cafile="/Applications/MAMP/Library/OpenSSL/certs/cacert.pem"`
+ - Restart MAMP server
